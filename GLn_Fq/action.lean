@@ -44,7 +44,6 @@ def LinearEquiv.toMatrix (f : M ≃ₗ[R] M)
 
 def GL_equiv_Basis : GL n R ≃ Basis n R (n → R) :=
   let B := Pi.basisFun R n
-  -- Equiv.trans
   { toFun := fun g ↦ Basis.ofRepr ((GLequiv R n g).trans B.repr)
     invFun := fun b ↦ LinearEquiv.toMatrix R _ n (LinearEquiv.refl _ _) B b
     left_inv := by
@@ -61,6 +60,4 @@ def GL_equiv_Basis : GL n R ≃ Basis n R (n → R) :=
       dsimp [LinearMap.toMatrix, LinearMap.toMatrix', B, Pi.basisFun]
       simp
       sorry
-
-       }
-  -- (Basis_equiv R n).symm
+     }
