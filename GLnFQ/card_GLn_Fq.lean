@@ -103,7 +103,8 @@ noncomputable def equiv_GL_basis : GL (Fin n) R ≃ Basis (Fin n) R ((Fin n) →
   apply Equiv.trans (equiv_linmap _ _)
   exact (Basis_equiv n R).symm
 
-noncomputable def equiv_basis_linearindependent (hn : 0 < n): Basis (Fin n) 𝔽 ((Fin n) → 𝔽) ≃ { s : Fin n → (Fin n → 𝔽) // LinearIndependent 𝔽 s } where
+noncomputable def equiv_basis_linearindependent (hn : 0 < n) : Basis (Fin n) 𝔽 ((Fin n) → 𝔽) ≃
+    { s : Fin n → (Fin n → 𝔽) // LinearIndependent 𝔽 s } where
   toFun := fun b ↦ ⟨b,Basis.linearIndependent _⟩
   invFun := by
     intro ⟨s,hs⟩
@@ -126,7 +127,7 @@ noncomputable instance : Fintype (Basis (Fin n) 𝔽 ((Fin n) → 𝔽)) :=
 
 lemma card_GL (hm : m ≠ 0): Fintype.card (GL (Fin n) (GaloisField p m)) =
         ∏ i : (Fin n), (p ^ (m * n) - p ^ (m * i)) := by
-    by_cases hn : n=0
+    by_cases hn : n = 0
     · rw [hn]
       simp only [Fintype.card_unique, Finset.univ_eq_empty, mul_zero, pow_zero,
       Finset.prod_empty]
