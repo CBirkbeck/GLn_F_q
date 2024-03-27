@@ -42,7 +42,7 @@ def LinearEquiv.toMatrix (f : M ≃ₗ[R] M)
       simp only [comp_coe, self_trans_symm, refl_toLinearMap]
       rw [LinearMap.toMatrix_id]
 
-def GL_equiv_Basis : GL n R ≃ Basis n R (n → R) :=
+noncomputable def GL_equiv_Basis : GL n R ≃ Basis n R (n → R) :=
   let B := Pi.basisFun R n
   { toFun := fun g ↦ Basis.ofRepr ((GLequiv R n g).trans B.repr)
     invFun := fun b ↦ LinearEquiv.toMatrix R _ n (LinearEquiv.refl _ _) B b
