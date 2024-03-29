@@ -4,11 +4,9 @@ import Mathlib.Tactic.Have
 
 open Matrix BigOperators
 
-variable (n : ℕ) {K : Type*} [Field K] [Fintype K]
+variable (n : ℕ) {𝔽 : Type*} [Field 𝔽] [Fintype 𝔽]
 
-local notation "q" => Fintype.card K
-
-local notation "𝔽" => K
+local notation "q" => Fintype.card 𝔽
 
 noncomputable instance {k : ℕ} :
     Fintype ({ s : Fin k → (Fin n → 𝔽) // LinearIndependent 𝔽 s}) :=
@@ -27,7 +25,7 @@ lemma complement_card (s : { s : Fin k → Fin n → 𝔽 // LinearIndependent �
       (q) ^ n - (q) ^ k := by
   rw [Fintype.card_compl_set, Fintype.card_fun, Fintype.card_fin]
   simp only [SetLike.coe_sort_coe]
-  rw [card_eq_pow_finrank (K := K) (V := Submodule.span K (Set.range (s : Fin k → Fin n → 𝔽))),
+  rw [card_eq_pow_finrank (K := 𝔽) (V := Submodule.span 𝔽 (Set.range (s : Fin k → Fin n → 𝔽))),
     finrank_span_eq_card s.property, Fintype.card_fin]
 
 def inductiveStepEquiv (k : ℕ) :
