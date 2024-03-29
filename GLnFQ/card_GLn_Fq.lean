@@ -4,9 +4,11 @@ import Mathlib.Tactic.Have
 
 open Matrix BigOperators
 
-variable (p n m : ℕ) [Fact (Nat.Prime p)]
+variable (n : ℕ) {K : Type*} [Field K] [Fintype K]
 
-local notation "𝔽" => (GaloisField p m)
+local notation "q" => Fintype.card K
+
+local notation "𝔽" => K
 
 noncomputable instance {k : ℕ} :
     Fintype ({ s : Fin k → (Fin n → 𝔽) // LinearIndependent 𝔽 s}) :=
@@ -20,13 +22,13 @@ noncomputable instance {s : { s : Fin k → Fin n → 𝔽 // LinearIndependent 
     Fintype ((Submodule.span 𝔽 (Set.range (s : Fin k → Fin n → 𝔽)))ᶜ : Set (Fin n → 𝔽)) :=
   Fintype.ofFinite _
 
-lemma complement_card (hm : m ≠ 0) (s : { s : Fin k → Fin n → 𝔽 // LinearIndependent 𝔽 s }):
+lemma complement_card (s : { s : Fin k → Fin n → 𝔽 // LinearIndependent 𝔽 s }):
     Fintype.card ((Submodule.span 𝔽 (Set.range (s : Fin k → Fin n → 𝔽)))ᶜ : Set (Fin n → 𝔽)) =
-      (p ^ m) ^ n - (p ^ m) ^ k := by
-  rw [Fintype.card_compl_set, Fintype.card_fun, GaloisField.card _ _ hm, Fintype.card_fin]
+      (q) ^ n - (q) ^ k := by
+  rw [Fintype.card_compl_set, Fintype.card_fun, Fintype.card_fin]
   simp only [SetLike.coe_sort_coe]
-  rw [card_eq_pow_finrank (K := 𝔽), finrank_span_eq_card s.property, GaloisField.card _ _ hm,
-    Fintype.card_fin]
+  rw [card_eq_pow_finrank (K := K) (V := Submodule.span K (Set.range (s : Fin k → Fin n → 𝔽))),
+    finrank_span_eq_card s.property, Fintype.card_fin]
 
 def inductiveStepEquiv (k : ℕ) :
     { s : Fin (k + 1) → Fin n → 𝔽 // LinearIndependent 𝔽 s } ≃
@@ -43,36 +45,31 @@ def inductiveStepEquiv (k : ℕ) :
   right_inv := fun ⟨_, _⟩ => by simp only [Fin.cons_zero, Subtype.coe_eta, Sigma.mk.inj_iff,
     Fin.tail_cons, heq_eq_eq, and_self]
 
-lemma inductive_step_card (hm : m ≠ 0) (k : ℕ) :
+lemma inductive_step_card (k : ℕ) :
     Fintype.card { s : Fin (k + 1) → Fin n → 𝔽 // LinearIndependent 𝔽 s } =
       Fintype.card { s : Fin k → Fin n → 𝔽 // LinearIndependent 𝔽 s } *
-      ((p ^ m) ^ n - (p ^ m) ^k) := by
-  rw [Fintype.card_congr (inductiveStepEquiv p n m k), Fintype.card_sigma]
-  simp only [complement_card p n m hm _, Finset.sum_const]
+      ((q) ^ n - (q) ^k) := by
+  rw [Fintype.card_congr (inductiveStepEquiv n k), Fintype.card_sigma]
+  simp only [complement_card n, Finset.sum_const]
   rfl
 
-lemma step2 (hm : m ≠ 0) {k : ℕ} (hk : k ≤ n) :
+lemma step2 {k : ℕ} (hk : k ≤ n) :
     Fintype.card { s : Fin k → (Fin n → 𝔽) // LinearIndependent 𝔽 s } =
-      ∏ i : Fin k, ((p ^ m) ^ n - (p ^ m) ^ i.val) := by
+      ∏ i : Fin k, ((q) ^ n - (q) ^ i.val) := by
   induction' k with k ih
   · simp only [Nat.zero_eq, LinearIndependent, Finsupp.total_fin_zero, LinearMap.ker_zero,
     Fintype.card_ofSubsingleton, Finset.univ_eq_empty, Finset.prod_empty]
-  · simp only [inductive_step_card p n m hm k, ih (Nat.le_of_succ_le hk), mul_comm,
+  · simp only [inductive_step_card n k, ih (Nat.le_of_succ_le hk), mul_comm,
     Fin.prod_univ_succAbove _ k, Fin.cast_nat_eq_last, Fin.val_last, Fin.succAbove_last,
     Fin.coe_castSucc]
 
-lemma card_linearIndependent (hm : m ≠ 0):
+lemma card_linearIndependent :
     Fintype.card { s : Fin n → (Fin n → 𝔽) // LinearIndependent 𝔽 s } =
-      ∏ i : Fin n, (p ^ (m * n) - p ^ (m * i)) := by
-  rw [step2 _ _ _ hm]
-  apply Finset.prod_congr
-  · rfl
-  · simp only [Finset.mem_univ, forall_true_left]
-    intro x
-    ring_nf
-  · simp only [le_refl]
+      ∏ i : Fin n, (q ^ (n) - q ^ (i : ℕ)) := by
+  rw [step2 _ _  ]
+  rfl
 
-variable (R : Type) [CommRing R]
+variable (R : Type*) [CommRing R]
 
 def GLequiv : GL (Fin n) R ≃* (((Fin n) → R) ≃ₗ[R] ((Fin n) → R)) :=
   MulEquiv.trans
@@ -119,17 +116,17 @@ noncomputable def equiv_basis_linearindependent (hn : 0 < n) : Basis (Fin n) �
     intro ⟨s,hs⟩
     simp only [coe_basisOfLinearIndependentOfCardEqFinrank]
 
-noncomputable instance fintype : Fintype (GL (Fin n) (GaloisField p m)) := by
-    exact Fintype.ofFinite (GL (Fin n) (GaloisField p m))
+noncomputable instance fintype : Fintype (GL (Fin n) 𝔽) := by
+    exact Fintype.ofFinite (GL (Fin n) 𝔽)
 
 noncomputable instance : Fintype (Basis (Fin n) 𝔽 ((Fin n) → 𝔽)) :=
     Fintype.ofEquiv _ (equiv_GL_basis n 𝔽)
 
-lemma card_GL (hm : m ≠ 0): Fintype.card (GL (Fin n) (GaloisField p m)) =
-        ∏ i : (Fin n), (p ^ (m * n) - p ^ (m * i)) := by
+lemma card_GL : Fintype.card (GL (Fin n) 𝔽) =
+        ∏ i : (Fin n), (q ^ (n) - q ^ ( i : ℕ )) := by
     by_cases hn : n = 0
     · rw [hn]
       simp only [Fintype.card_unique, Finset.univ_eq_empty, mul_zero, pow_zero,
       Finset.prod_empty]
-    · rw [Fintype.card_congr (equiv_GL_basis n 𝔽), ← (card_linearIndependent p n m hm),
-      Fintype.card_congr (equiv_basis_linearindependent p n m (Nat.pos_of_ne_zero hn))]
+    · rw [Fintype.card_congr (equiv_GL_basis n 𝔽), ← (card_linearIndependent n),
+      Fintype.card_congr (equiv_basis_linearindependent n (Nat.pos_of_ne_zero hn))]
