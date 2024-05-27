@@ -7,7 +7,8 @@ section
 
 def mapGL [Fintype m] [DecidableEq m] [CommRing α] [CommRing β] (f : α →+* β) : GL m α →* GL m β := Units.map (RingHom.toMonoidHom (RingHom.mapMatrix f))
 
-lemma mapGL_injective [Fintype m] [DecidableEq m] [CommRing α] [CommRing β] (f : α →+* β) (h : Function.Injective f): Function.Injective (mapGL f : GL m α → GL m β) := by
+lemma mapGL_injective [Fintype m] [DecidableEq m] [CommRing α] [CommRing β] (f : α →+* β)
+  (h : Function.Injective f): Function.Injective (mapGL f : GL m α → GL m β) := by
     intro M N k
     unfold mapGL at k
     apply @Units.map_injective _ _ _ _ (RingHom.toMonoidHom (RingHom.mapMatrix f)) _ _ _ k
@@ -17,14 +18,16 @@ lemma mapGL_injective [Fintype m] [DecidableEq m] [CommRing α] [CommRing β] (f
     apply h
     rw [← @map_apply _ _ _ _ _ f, ← @map_apply _ _ _ _ _ f, g]
 
-lemma mapMatrix_surjective [Fintype m] [DecidableEq m] [CommRing α] [CommRing β] (f : α →+* β) (h : Function.Surjective f) : Function.Surjective (RingHom.mapMatrix f : Matrix m m α →+* Matrix m m β) := by
+lemma mapMatrix_surjective [Fintype m] [DecidableEq m] [CommRing α] [CommRing β] (f : α →+* β)
+(h : Function.Surjective f) : Function.Surjective (RingHom.mapMatrix f : Matrix m m α →+* Matrix m m β) := by
   intro M
   use (fun i j => Function.surjInv h (M i j))
   ext i j
   rw [RingHom.mapMatrix_apply]
   exact Function.surjInv_eq h (M i j)
 
-lemma mapGL_surjective [Fintype m] [DecidableEq m] [CommRing α] [CommRing β] (f : α →+* β) (h1 : Function.Surjective f) [IsLocalRingHom f]: Function.Surjective (mapGL f : GL m α → GL m β) := by
+lemma mapGL_surjective [Fintype m] [DecidableEq m] [CommRing α] [CommRing β] (f : α →+* β)
+  (h1 : Function.Surjective f) [IsLocalRingHom f]: Function.Surjective (mapGL f : GL m α → GL m β) := by
   intro M
   rcases ((mapMatrix_surjective f h1) (M : Matrix m m β)) with ⟨N,hN⟩
   have : IsUnit (Matrix.det N) := by
@@ -37,7 +40,7 @@ lemma mapGL_surjective [Fintype m] [DecidableEq m] [CommRing α] [CommRing β] (
   ext i j
   exact congrFun (congrFun hN i) j
 
-lemma matrix_prodEquivPi [Fintype m] {r : ι → Type*} [∀ i : ι, Mul (r i)] [∀ i : ι, AddCommMonoid (r i)]: Matrix m m (∀ i, r i) ≃* ( ∀ i, Matrix m m (r i)) where
+def matrix_prodEquivPi [Fintype m] {r : ι → Type*} [∀ i : ι, Mul (r i)] [∀ i : ι, AddCommMonoid (r i)]: Matrix m m (∀ i, r i) ≃* ( ∀ i, Matrix m m (r i)) where
   toFun M k := fun i j => M i j k
   invFun M := fun i j => (fun k => M k i j)
   left_inv := congrFun rfl
@@ -61,7 +64,10 @@ def pi_units (r : ι → Type*) [∀ i : ι, Monoid (r i)] : (∀ i , r i)ˣ ≃
   right_inv u := rfl
   map_mul' u v := rfl
 
-lemma GL_prodEquivPi [Fintype m] [DecidableEq m] (r : ι → Type*) [∀ i : ι, CommRing (r i)]: GL m (∀ i, r i) ≃* ∀ i, GL m (r i) where
+set_option synthInstance.maxHeartbeats 400000
+set_option maxHeartbeats 400000
+noncomputable
+def GL_prodEquivPi [Fintype m] [DecidableEq m] (r : ι → Type*) [∀ i : ι, CommRing (r i)]: GL m (∀ i, r i) ≃* ∀ i, GL m (r i) where
   toFun M k:= by
     apply Matrix.GeneralLinearGroup.mk'' (matrix_prodEquivPi M k)
     rw [show det ((matrix_prodEquivPi M k) : Matrix m m (r k)) = (det (M : Matrix m m (∀ i, r i))) k by rw [det_matrix_prod_pi]]
@@ -88,6 +94,7 @@ lemma GL_prodEquivPi [Fintype m] [DecidableEq m] (r : ι → Type*) [∀ i : ι,
       GeneralLinearGroup.val_det_apply, GeneralLinearGroup.val_inv_det_apply, id_eq, eq_mpr_eq_cast,
       Units.mk_val]
   map_mul' M N:= by
+    simp only [Units.val_mul, _root_.map_mul, Pi.mul_apply]
     simp only [GeneralLinearGroup.mk'', nonsingInvUnit, unitOfInvertible, Units.val_mul,
       _root_.map_mul, Pi.mul_apply, invOf_eq_nonsing_inv]
     ext k i j
@@ -125,11 +132,11 @@ lemma ker_proj_ZMod {x : ZMod (p^r)} (h : r ≥ 1): x ∈ (RingHom.ker (proj_ZMo
     simp only [proj_ZMod, ZMod.castHom_apply] at hx
     have : p ∣ x.val := by
       apply (Nat.modEq_zero_iff_dvd).1
-      apply (ZMod.nat_cast_eq_nat_cast_iff _ _ _).1
-      rw [ZMod.nat_cast_val, Nat.cast_zero, hx]
+      apply (ZMod.natCast_eq_natCast_iff _ _ _).1
+      rw [ZMod.natCast_val, Nat.cast_zero, hx]
     rcases this with ⟨y,hy⟩
     use y
-    rw [← Nat.cast_mul, ← hy, ZMod.nat_cast_val, ZMod.cast_id', id_eq]
+    rw [← Nat.cast_mul, ← hy, ZMod.natCast_val, ZMod.cast_id', id_eq]
   · intro ⟨y, hy⟩
     rw [RingHom.mem_ker, hy]
     simp only [proj_ZMod, _root_.map_mul, map_natCast, CharP.cast_eq_zero, ZMod.castHom_apply, zero_mul]
@@ -139,7 +146,7 @@ lemma proj_ZMod_surj (h : r ≥ 1) : Function.Surjective (proj_ZMod p r h) := ZM
 instance proj_ZMod_LocalRingHom : IsLocalRingHom (proj_ZMod p r h) where
   map_nonunit x hx:= by
     rcases hx with ⟨y,hy⟩
-    rw [← show ↑(ZMod.val x) = x by simp only [ZMod.nat_cast_val, ZMod.cast_id', id_eq]]
+    rw [← show ↑(ZMod.val x) = x by simp only [ZMod.natCast_val, ZMod.cast_id', id_eq]]
     apply (ZMod.isUnit_iff_coprime x.val (p ^ r)).2
     apply Nat.Coprime.pow_right r _
     apply (ZMod.isUnit_iff_coprime x.val (p)).1
@@ -273,13 +280,14 @@ lemma inj_fin_pZpr (h : r ≥ 1) : Function.Injective (fin_pZpr p r) := by
   have qdiv: ( q : ℤ) ∣ x - y := by
     apply Int.dvd_of_mul_dvd_mul_left _
     · rw [show (p : ℤ) * (x - y) = p * x - p * y by ring]
-      apply (ZMod.int_cast_eq_int_cast_iff_dvd_sub _ _ (p*q)).1
+      apply (ZMod.intCast_eq_intCast_iff_dvd_sub _ _ (p*q)).1
       simp only [Int.cast_mul, Int.cast_ofNat]
       symm
       have : p * q = p ^ r := by
         simp only [q]
         rw [mul_pow_sub_one (Nat.not_eq_zero_of_lt h)]
       rw [this]
+      push_cast
       exact hxy
     · apply Int.ofNat_ne_zero.2
       apply Nat.Prime.ne_zero
@@ -306,10 +314,10 @@ lemma surj_fin_pZpr (h : r ≥ 1) : Function.Surjective (fin_pZpr p r) := by
       · apply dvd_pow_self
         apply Nat.not_eq_zero_of_lt h
       · rw [show (p : ℤ) ^ r = q by simp [q]]
-        apply (ZMod.int_cast_eq_int_cast_iff_dvd_sub _ _ _).1
-        simp only [ZMod.nat_cast_val, Int.cast_mul, Int.cast_ofNat, ZMod.int_cast_cast,
-          ZMod.cast_id', id_eq, hy, ZMod.cast_mul', ZMod.cast_nat_cast']
-    · simp only [ZMod.nat_cast_val, dvd_mul_right]
+        apply (ZMod.intCast_eq_intCast_iff_dvd_sub _ _ _).1
+        simp only [ZMod.natCast_val, Int.cast_mul, Int.cast_natCast, ZMod.intCast_cast,
+          ZMod.cast_id', id_eq, hy, ZMod.cast_mul', ZMod.cast_natCast']
+    · simp only [ZMod.natCast_val, dvd_mul_right]
   rcases this with ⟨a,ha⟩
   use (a : Fin (p ^ (r-1)))
   simp only [fin_pZpr, Subtype.mk.injEq]
@@ -343,9 +351,14 @@ lemma surj_fin_pZpr (h : r ≥ 1) : Function.Surjective (fin_pZpr p r) := by
       rw [← han]
       simp only [Nat.cast_pow]
       exact apr
-    rw [han, Int.cast_ofNat, Int.cast_ofNat, Fin.val_nat_cast, ← anpr]
+    rw [han]
+    push_cast
+    simp only [Fin.val_natCast]
+    rw [anpr]
+    simp only [dvd_refl, Nat.mod_mod_of_dvd]
   rw [← this]
-  simp only [Int.cast_mul, Int.cast_ofNat]
+  simp only [Int.cast_mul, Int.cast_natCast]
+
 
 lemma bij_fin_pZpr (h : r ≥ 1) : Function.Bijective (fin_pZpr p r) := ⟨inj_fin_pZpr p r h, surj_fin_pZpr p r h⟩
 
@@ -397,7 +410,7 @@ instance : (a : { x // x ∈ N.primeFactors }) → Fintype (ZMod (↑a ^ (Nat.fa
   have : NeZero x := NeZero.of_pos (Nat.pos_of_mem_primeFactors hx)
   apply ZMod.fintype
 
-instance : Fintype (GL (Fin n) ((i : { x // x ∈ (N).primeFactors }) → ZMod (↑i ^ (Nat.factorization N) ↑i))):= instFintypeUnits
+instance : Fintype (GL (Fin n) ((i : { x // x ∈ (N).primeFactors }) → ZMod (↑i ^ (Nat.factorization N) ↑i))):= instFintypeUnitsOfDecidableEq
 
 lemma card_GL_ZMod : Nat.card (GL (Fin n) (ZMod (N))) = Finsupp.prod (Nat.factorization (N)) fun x x_1 => (x ^ ((x_1 - 1) * (n)^2) * ∏ i : (Fin n), (x ^ (n) - x ^ i.val)) := by
   set fun_card:= fun (x x_1 : ℕ) => (x ^ ((x_1 - 1) * (n)^2) * ∏ i : (Fin n), (x ^ (n) - x ^ i.val))
@@ -405,6 +418,7 @@ lemma card_GL_ZMod : Nat.card (GL (Fin n) (ZMod (N))) = Finsupp.prod (Nat.factor
     conv =>
       enter [1]
       rw [← (Nat.factorization_prod_pow_eq_self h)]
+    exact rfl
   conv =>
     enter [1]
     rw [N_primes]

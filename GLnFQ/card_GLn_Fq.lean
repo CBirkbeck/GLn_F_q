@@ -58,7 +58,7 @@ lemma step2 {k : ℕ} (hk : k ≤ n) :
   · simp only [Nat.zero_eq, LinearIndependent, Finsupp.total_fin_zero, LinearMap.ker_zero,
     Fintype.card_ofSubsingleton, Finset.univ_eq_empty, Finset.prod_empty]
   · simp only [inductive_step_card n k, ih (Nat.le_of_succ_le hk), mul_comm,
-    Fin.prod_univ_succAbove _ k, Fin.cast_nat_eq_last, Fin.val_last, Fin.succAbove_last,
+    Fin.prod_univ_succAbove _ k, Fin.natCast_eq_last, Fin.val_last, Fin.succAbove_last,
     Fin.coe_castSucc]
 
 lemma card_linearIndependent :
