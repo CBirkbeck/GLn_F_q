@@ -1,6 +1,7 @@
 import Mathlib.FieldTheory.Finite.GaloisField
 import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup
 import Mathlib.Tactic.Have
+import Mathlib.Data.Matrix.Rank
 
 open Matrix BigOperators
 
@@ -61,64 +62,34 @@ lemma step2 {k : ℕ} (hk : k ≤ n) :
     Fin.prod_univ_succAbove _ k, Fin.natCast_eq_last, Fin.val_last, Fin.succAbove_last,
     Fin.coe_castSucc]
 
-lemma card_linearIndependent :
-    Fintype.card { s : Fin n → (Fin n → 𝔽) // LinearIndependent 𝔽 s } =
-      ∏ i : Fin n, (q ^ (n) - q ^ (i : ℕ)) := by
-  rw [step2 _ _  ]
-  rfl
+lemma eq_matrix_basis (M : Matrix (Fin n) (Fin n) 𝔽) : M = Basis.toMatrix (Pi.basisFun 𝔽 (Fin n)) (Matrix.transpose M) := by
+  ext
+  rw [Basis.toMatrix, Pi.basisFun_repr, transpose_apply]
 
-variable (R : Type*) [CommRing R]
-
-def GLequiv : GL (Fin n) R ≃* (((Fin n) → R) ≃ₗ[R] ((Fin n) → R)) :=
-  MulEquiv.trans
-    Matrix.GeneralLinearGroup.toLinear
-    (LinearMap.GeneralLinearGroup.generalLinearEquiv R _)
-
-def Basis_equiv : Basis (Fin n) R ((Fin n) → R) ≃ ((Fin n) → R) ≃ₗ[R] ((Fin n) →₀ R) where
-  toFun := Basis.repr
-  invFun := Basis.ofRepr
-  left_inv := fun b ↦ by cases b; rfl
-  right_inv := fun b ↦ rfl
-
-noncomputable def equiv_finsupp : ((Fin n) → R) ≃ₗ[R] ((Fin n) →₀ R) := by
-  exact LinearEquiv.symm (Finsupp.linearEquivFunOnFinite R R (Fin n))
-
-noncomputable def equiv_linmap: (((Fin n) → R) ≃ₗ[R] ((Fin n) → R)) ≃
-    (((Fin n) → R) ≃ₗ[R] ((Fin n) →₀ R)) where
-  toFun := fun f ↦ (f.trans (equiv_finsupp n R)  : (((Fin n) → R) ≃ₗ[R] ((Fin n) →₀ R)))
-  invFun := fun f ↦ (f.trans (equiv_finsupp n R).symm  : (((Fin n) → R) ≃ₗ[R] ((Fin n) → R)))
-  left_inv := congrFun rfl
-  right_inv := by
-    apply congrFun
-    ext
-    rfl
-
-noncomputable def equiv_GL_basis : GL (Fin n) R ≃ Basis (Fin n) R ((Fin n) → R) := by
-  apply Equiv.trans (GLequiv _ _).toEquiv
-  apply Equiv.trans (equiv_linmap _ _)
-  exact (Basis_equiv n R).symm
-
-noncomputable def equiv_basis_linearindependent (hn : 0 < n) : Basis (Fin n) 𝔽 ((Fin n) → 𝔽) ≃
-    { s : Fin n → (Fin n → 𝔽) // LinearIndependent 𝔽 s } where
-  toFun := fun b ↦ ⟨b,Basis.linearIndependent _⟩
-  invFun := by
-    intro ⟨s,hs⟩
+noncomputable def equiv_GL_linearindependent (hn : 0 < n) :
+    GL (Fin n) 𝔽 ≃ { s : Fin n → (Fin n → 𝔽) // LinearIndependent 𝔽 s } where
+  toFun M := ⟨Matrix.transpose M, by
+    apply linearIndependent_iff_card_eq_finrank_span.2
+    rw [Set.finrank, ← Matrix.rank_eq_finrank_span_cols, Matrix.rank_unit]⟩
+  invFun M := by
+    apply Matrix.GeneralLinearGroup.mk'' (Matrix.transpose ( M.1 : Matrix (Fin n) (Fin n) 𝔽))
+    rw [eq_matrix_basis n (Matrix.transpose (M.1)), transpose_transpose]
     have : Nonempty (Fin n) := Fin.pos_iff_nonempty.1 hn
-    apply basisOfLinearIndependentOfCardEqFinrank hs
-    simp only [Fintype.card_fin, FiniteDimensional.finrank_fintype_fun_eq_card]
+    have hdim : Fintype.card (Fin n) = FiniteDimensional.finrank 𝔽 (Fin n → 𝔽) := by
+      simp only [Fintype.card_fin, FiniteDimensional.finrank_fintype_fun_eq_card]
+    let b := basisOfLinearIndependentOfCardEqFinrank M.2 hdim
+    rw [show M = ⇑b by simp only [b, coe_basisOfLinearIndependentOfCardEqFinrank]]
+    have : Invertible ((Pi.basisFun 𝔽 (Fin n)).toMatrix ⇑b) := (Pi.basisFun 𝔽 (Fin n)).invertibleToMatrix b
+    exact Matrix.isUnit_det_of_invertible _
   left_inv := by
-    intro b
-    apply DFunLike.ext'
-    simp only [coe_basisOfLinearIndependentOfCardEqFinrank]
-  right_inv := by
-    intro ⟨s,hs⟩
-    simp only [coe_basisOfLinearIndependentOfCardEqFinrank]
+    intro
+    ext
+    simp only [transpose_transpose]
+    exact rfl
+  right_inv := by exact congrFun rfl
 
 noncomputable instance fintype : Fintype (GL (Fin n) 𝔽) := by
     exact Fintype.ofFinite (GL (Fin n) 𝔽)
-
-noncomputable instance : Fintype (Basis (Fin n) 𝔽 ((Fin n) → 𝔽)) :=
-    Fintype.ofEquiv _ (equiv_GL_basis n 𝔽)
 
 lemma card_GL : Fintype.card (GL (Fin n) 𝔽) =
         ∏ i : (Fin n), (q ^ (n) - q ^ ( i : ℕ )) := by
@@ -126,5 +97,5 @@ lemma card_GL : Fintype.card (GL (Fin n) 𝔽) =
     · rw [hn]
       simp only [Fintype.card_unique, Finset.univ_eq_empty, mul_zero, pow_zero,
       Finset.prod_empty]
-    · rw [Fintype.card_congr (equiv_GL_basis n 𝔽), ← (card_linearIndependent n),
-      Fintype.card_congr (equiv_basis_linearindependent n (Nat.pos_of_ne_zero hn))]
+    · rw [Fintype.card_congr (equiv_GL_linearindependent n (Nat.pos_of_ne_zero hn))]
+      exact step2 _ (Nat.le_refl n)
