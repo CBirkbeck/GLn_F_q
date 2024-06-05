@@ -62,25 +62,25 @@ lemma step2 {k : ℕ} (hk : k ≤ n) :
     Fin.prod_univ_succAbove _ k, Fin.natCast_eq_last, Fin.val_last, Fin.succAbove_last,
     Fin.coe_castSucc]
 
-lemma eq_matrix_basis (M : Matrix (Fin n) (Fin n) 𝔽) : M = Basis.toMatrix (Pi.basisFun 𝔽 (Fin n)) (Matrix.transpose M) := by
-  ext
-  rw [Basis.toMatrix, Pi.basisFun_repr, transpose_apply]
+lemma eq_matrix_basis (M : Matrix (Fin n) (Fin n) 𝔽) :
+    M = Basis.toMatrix (Pi.basisFun 𝔽 (Fin n)) (transpose M) := rfl
 
 noncomputable def equiv_GL_linearindependent (hn : 0 < n) :
     GL (Fin n) 𝔽 ≃ { s : Fin n → (Fin n → 𝔽) // LinearIndependent 𝔽 s } where
-  toFun M := ⟨Matrix.transpose M, by
+  toFun M := ⟨transpose M, by
     apply linearIndependent_iff_card_eq_finrank_span.2
-    rw [Set.finrank, ← Matrix.rank_eq_finrank_span_cols, Matrix.rank_unit]⟩
+    rw [Set.finrank, ← rank_eq_finrank_span_cols, rank_unit]⟩
   invFun M := by
-    apply Matrix.GeneralLinearGroup.mk'' (Matrix.transpose ( M.1 : Matrix (Fin n) (Fin n) 𝔽))
-    rw [eq_matrix_basis n (Matrix.transpose (M.1)), transpose_transpose]
+    apply GeneralLinearGroup.mk'' (transpose (M.1))
+    rw [eq_matrix_basis n (transpose (M.1)), transpose_transpose]
     have : Nonempty (Fin n) := Fin.pos_iff_nonempty.1 hn
     have hdim : Fintype.card (Fin n) = FiniteDimensional.finrank 𝔽 (Fin n → 𝔽) := by
       simp only [Fintype.card_fin, FiniteDimensional.finrank_fintype_fun_eq_card]
     let b := basisOfLinearIndependentOfCardEqFinrank M.2 hdim
     rw [show M = ⇑b by simp only [b, coe_basisOfLinearIndependentOfCardEqFinrank]]
-    have : Invertible ((Pi.basisFun 𝔽 (Fin n)).toMatrix ⇑b) := (Pi.basisFun 𝔽 (Fin n)).invertibleToMatrix b
-    exact Matrix.isUnit_det_of_invertible _
+    have : Invertible ((Pi.basisFun 𝔽 (Fin n)).toMatrix ⇑b) :=
+      (Pi.basisFun 𝔽 (Fin n)).invertibleToMatrix b
+    exact isUnit_det_of_invertible _
   left_inv := by
     intro
     ext
