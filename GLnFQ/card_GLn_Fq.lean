@@ -52,7 +52,7 @@ lemma inductive_step_card (k : ℕ) :
   simp only [complement_card n, Finset.sum_const]
   rfl
 
-lemma step2 {k : ℕ} (hk : k ≤ n) :
+lemma card_LinearInependent_subtype {k : ℕ} (hk : k ≤ n) :
     Fintype.card { s : Fin k → (Fin n → 𝔽) // LinearIndependent 𝔽 s } =
       ∏ i : Fin k, ((q) ^ n - (q) ^ i.val) := by
   induction' k with k ih
@@ -65,8 +65,10 @@ lemma step2 {k : ℕ} (hk : k ≤ n) :
 lemma eq_matrix_basis (M : Matrix (Fin n) (Fin n) 𝔽) :
     M = Basis.toMatrix (Pi.basisFun 𝔽 (Fin n)) (transpose M) := rfl
 
-noncomputable def equiv_GL_linearindependent (hn : 0 < n) :
-    GL (Fin n) 𝔽 ≃ { s : Fin n → (Fin n → 𝔽) // LinearIndependent 𝔽 s } where
+/-- Equivalence between `GL n F` and `n` vectors of length `n` that are linearly independent. Given
+by sending a matrix to its coloumns. -/
+noncomputable def equiv_GL_linearindependent {F : Type*} [Field F] (hn : 0 < n) :
+    GL (Fin n) F ≃ { s : Fin n → (Fin n → F) // LinearIndependent F s } where
   toFun M := ⟨transpose M, by
     apply linearIndependent_iff_card_eq_finrank_span.2
     rw [Set.finrank, ← rank_eq_finrank_span_cols, rank_unit]⟩
@@ -74,12 +76,12 @@ noncomputable def equiv_GL_linearindependent (hn : 0 < n) :
     apply GeneralLinearGroup.mk'' (transpose (M.1))
     rw [eq_matrix_basis n (transpose (M.1)), transpose_transpose]
     have : Nonempty (Fin n) := Fin.pos_iff_nonempty.1 hn
-    have hdim : Fintype.card (Fin n) = FiniteDimensional.finrank 𝔽 (Fin n → 𝔽) := by
+    have hdim : Fintype.card (Fin n) = FiniteDimensional.finrank F (Fin n → F) := by
       simp only [Fintype.card_fin, FiniteDimensional.finrank_fintype_fun_eq_card]
     let b := basisOfLinearIndependentOfCardEqFinrank M.2 hdim
     rw [show M = ⇑b by simp only [b, coe_basisOfLinearIndependentOfCardEqFinrank]]
-    have : Invertible ((Pi.basisFun 𝔽 (Fin n)).toMatrix ⇑b) :=
-      (Pi.basisFun 𝔽 (Fin n)).invertibleToMatrix b
+    have : Invertible ((Pi.basisFun F (Fin n)).toMatrix ⇑b) :=
+      (Pi.basisFun F (Fin n)).invertibleToMatrix b
     exact isUnit_det_of_invertible _
   left_inv := by
     intro
@@ -98,4 +100,4 @@ lemma card_GL : Fintype.card (GL (Fin n) 𝔽) =
       simp only [Fintype.card_unique, Finset.univ_eq_empty, mul_zero, pow_zero,
       Finset.prod_empty]
     · rw [Fintype.card_congr (equiv_GL_linearindependent n (Nat.pos_of_ne_zero hn))]
-      exact step2 _ (Nat.le_refl n)
+      exact card_LinearInependent_subtype _ (Nat.le_refl n)
