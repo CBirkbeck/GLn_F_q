@@ -44,21 +44,13 @@ def inductiveStepEquiv (k : ℕ) :
   right_inv := fun ⟨_, _⟩ => by simp only [Fin.cons_zero, Subtype.coe_eta, Sigma.mk.inj_iff,
     Fin.tail_cons, heq_eq_eq, and_self]
 
-lemma inductive_step_card (k : ℕ) :
-    Fintype.card { s : Fin (k + 1) → Fin n → 𝔽 // LinearIndependent 𝔽 s } =
-      Fintype.card { s : Fin k → Fin n → 𝔽 // LinearIndependent 𝔽 s } *
-      ((q) ^ n - (q) ^k) := by
-  rw [Fintype.card_congr (inductiveStepEquiv n k), Fintype.card_sigma]
-  simp only [complement_card n, Finset.sum_const]
-  rfl
-
 lemma card_LinearInependent_subtype {k : ℕ} (hk : k ≤ n) :
     Fintype.card { s : Fin k → (Fin n → 𝔽) // LinearIndependent 𝔽 s } =
       ∏ i : Fin k, ((q) ^ n - (q) ^ i.val) := by
   induction' k with k ih
   · simp only [Nat.zero_eq, LinearIndependent, Finsupp.total_fin_zero, LinearMap.ker_zero,
     Fintype.card_ofSubsingleton, Finset.univ_eq_empty, Finset.prod_empty]
-  · simp only [inductive_step_card n k, ih (Nat.le_of_succ_le hk), mul_comm,
+  · simp only [Fintype.card_congr (inductiveStepEquiv n k), Fintype.card_sigma, complement_card n, Finset.sum_const, Finset.card_univ, smul_eq_mul, ih (Nat.le_of_succ_le hk), mul_comm,
     Fin.prod_univ_succAbove _ k, Fin.natCast_eq_last, Fin.val_last, Fin.succAbove_last,
     Fin.coe_castSucc]
 
